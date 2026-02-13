@@ -1,0 +1,22 @@
+# --- SIGURNOST (Ovo ne smije na GitHub) ---
+db_config.php
+debug-fix.php
+mailer copy.php
+
+*.env
+
+# --- PHP & Server ---
+vendor/
+error_log
+*.log
+tools/
+
+# --- Operativni sustav (Smeće) ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE (VS Code postavke) ---
+.vscode/
+.idea/
+*.swp
