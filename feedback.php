@@ -24,6 +24,7 @@ if ($id && $rating) {
 <head>
     <meta charset="UTF-8">
     <title>Thank You | Hanžeković IDM</title>
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <style>
         body { font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f7f6; }
         .card { background: white; padding: 3rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }

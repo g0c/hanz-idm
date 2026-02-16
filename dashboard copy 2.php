@@ -1,6 +1,6 @@
 <?php
 /**
- * v4.4.4 - DASHBOARD WITH FEEDBACK STATS
+ * v4.4.0 - RESTORED DASHBOARD
  */
 require_once __DIR__ . '/db_config.php';
 require_once __DIR__ . '/mailer.php';
@@ -9,19 +9,25 @@ session_start();
 if (!isset($_SESSION['user_id'])) { header("Location: index.php"); exit; }
 $rola = $_SESSION['rola'];
 
+// Varijable za prikaz poruka i grešaka
 $message = $_SESSION['f_msg'] ?? ''; 
 $msg_type = $_SESSION['f_type'] ?? ''; 
 unset($_SESSION['f_msg'], $_SESSION['f_type']);
+
+// OIB Error flag (za fokusiranje polja)
 $oib_error = false;
 
-// --- LOGIKA ZA NOVI ZAHTJEV ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'new_identity') {
+    
+    // 1. VALIDACIJA OIB-a (Server side)
     $uneseni_oib = $_POST['oib'] ?? '';
     if (!empty($uneseni_oib) && (strlen($uneseni_oib) !== 11 || !ctype_digit($uneseni_oib))) {
-        $message = "GREŠKA: OIB mora imati točno 11 znamenki!";
+        // Ako OIB nije prazan, A NIJE točno 11 znamenki ili sadrži slova
+        $message = "GREŠKA: OIB mora sadržavati točno 11 znamenki!";
         $msg_type = "error";
-        $oib_error = true;
+        $oib_error = true; // Ovo će nam reći HTML-u da oboji polje u crveno
     } else {
+        // 2. AKO JE SVE OK -> SPREMI U BAZU
         try {
             $cols = []; $slots = []; $vals = [];
             foreach ($form_schema as $key => $cfg) {
@@ -29,85 +35,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
             $sql = "INSERT INTO hanz_identities (" . implode(',', $cols) . ") VALUES (" . implode(',', $slots) . ")";
             $pdo->prepare($sql)->execute($vals);
-            $new_id = $pdo->lastInsertId();
-            
-            $baseUrl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
-            $editLink = "$baseUrl/edit_identity.php?id=$new_id";
 
+            // Slanje maila
             $subjekt = "NOVI ZAHTJEV: " . $_POST['ime'] . " " . $_POST['prezime'];
             $mailRows = "";
             foreach ($form_schema as $key => $cfg) {
                 $val = !empty($_POST[$key]) ? nl2br(htmlspecialchars($_POST[$key])) : '-';
-
-            // Ako je polje datum, formatiraj ga za mail
-                if ($cfg['type'] === 'date' && !empty($_POST[$key])) {
-                    $val = date('d.m.Y', strtotime($_POST[$key]));
-                }
-
                 $mailRows .= "<tr><td style='padding:10px; border-bottom:1px solid #eee;'>{$cfg['label']}</td><td style='padding:10px; border-bottom:1px solid #eee; font-weight:bold;'>$val</td></tr>";
             }
             $tijelo = "<html><body style='font-family:Segoe UI,Arial; background:#f4f4f4; padding:20px;'>
                         <div style='max-width:600px; margin:0 auto; background:#fff; border:1px solid #e0e0e0;'>
                             <div style='background:#1a1a1a; color:#fff; padding:25px; text-align:center;'>
                                 <h2 style='margin:0;'>HANŽEKOVIĆ & PARTNERI</h2>
-                                <p>NOVI ZAHTJEV #$new_id</p>
+                                <p>NOVI ZAHTJEV</p>
                             </div>
-                            <div style='padding:30px;'>
-                                <table style='width:100%;'>$mailRows</table>
-                                <div style='margin-top:30px; text-align:center;'>
-                                    <a href='$editLink' style='background:#1a1a1a; color:#fff; padding:12px 25px; text-decoration:none; border-radius:4px; font-weight:bold; display:inline-block;'>OTVORI I OBRADI ZAHTJEV</a>
-                                </div>
-                            </div>
+                            <div style='padding:30px;'><table style='width:100%;'>$mailRows</table></div>
                         </div></body></html>";
 
             $primatelji = isset($it_primatelji) ? $it_primatelji : ['gkonjic@piopet.hr'];
             posalji_obavijest($primatelji, $subjekt, $tijelo);
 
-            $_SESSION['f_msg'] = "Zahtjev uspješno poslan!";
+            // Uspjeh - čistimo POST da se forma isprazni
+            $_POST = [];
+            $_SESSION['f_msg'] = "Zahtjev je uspješno poslan!";
             $_SESSION['f_type'] = "success";
             header("Location: dashboard.php"); exit;
 
         } catch (PDOException $e) { 
-            $message = "Greška: " . $e->getMessage(); 
+            $message = "Greška baze: " . $e->getMessage(); 
             $msg_type = "error";
         }
     }
 }
 
-// --- DOHVAT PODATAKA ---
 $identities = ($rola === 'admin') ? $pdo->query("SELECT * FROM hanz_identities ORDER BY updated_at DESC")->fetchAll() : [];
-
-// --- STATISTIKA FEEDBACKA (Samo za Admina) ---
-$stats = ['excellent' => 0, 'average' => 0, 'poor' => 0];
-if ($rola === 'admin') {
-    try {
-        $stmt = $pdo->query("SELECT rating, COUNT(*) as count FROM hanz_feedback GROUP BY rating");
-        while ($row = $stmt->fetch()) {
-            $stats[$row['rating']] = $row['count'];
-        }
-    } catch (PDOException $e) { /* Tablica možda još ne postoji */ }
-}
 ?>
 <!DOCTYPE html>
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
     <title>Hanžeković & Partneri | IDM</title>
-    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="static/style.css">
     <style>
+        /* Stil za grešku na inputu */
         .input-error { border: 2px solid #dc3545 !important; background-color: #fff8f8 !important; }
-        .alert-error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; }
+        .alert-error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; border: 1px solid #f5c6cb; }
         .alert-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; }
-        
-        /* Novi stilovi za statistiku */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
-        .stat-box { padding: 15px; border-radius: 4px; color: #fff; font-weight: bold; text-transform: uppercase; }
-        .stat-exc { background: #28a745; }
-        .stat-avg { background: #ffc107; color: #000; }
-        .stat-poor { background: #dc3545; }
-        .stat-num { font-size: 2rem; display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body class="dashboard-page">
@@ -131,8 +105,14 @@ if ($rola === 'admin') {
             <div class="form-grid">
                 <?php foreach ($form_schema as $key => $f): ?>
                     <?php 
+                        // STICKY DATA: Ako imamo podatke u POST-u (zbog greške), vrati ih nazad u input
                         $value = isset($_POST[$key]) ? htmlspecialchars($_POST[$key]) : '';
+                        
+                        // Specijalna klasa ako je OIB pogrešan
                         $errorClass = ($key === 'oib' && $oib_error) ? 'input-error' : '';
+                        
+                        // Autofocus ako je greška na OIB-u
+                        $autofocus = ($key === 'oib' && $oib_error) ? 'autofocus' : '';
                     ?>
                     
                     <div class="<?php echo ($f['type'] === 'textarea') ? 'full-width' : ''; ?>">
@@ -157,13 +137,25 @@ if ($rola === 'admin') {
                                 name="<?php echo $key; ?>" 
                                 value="<?php echo $value; ?>"
                                 class="<?php echo $errorClass; ?>"
+                                <?php echo isset($autofocus) ? $autofocus : ''; ?>
                                 <?php echo $f['required'] ? 'required' : ''; ?>
+                                
                                 <?php 
+                                // --- OVDJE JE PROMJENA ---
                                 if ($key === 'oib') {
+                                    // Ako je polje OIB, ignoriraj config i ZAKUCAJ ova pravila:
                                     echo 'maxlength="11" '; 
+                                    // JavaScript koji uživo briše slova i ne da preko 11 znakova:
                                     echo 'oninput="this.value = this.value.replace(/[^0-9]/g, \'\').slice(0, 11)" ';
-                                    echo 'placeholder="Unesi točno 11 znamenki" ';
+                                    echo 'placeholder="Točno 11 znamenki" ';
+                                } else {
+                                    // Za sva ostala polja koristi normalno iz konfiga
+                                    echo isset($f['min']) ? 'minlength="'.$f['min'].'" ' : '';
+                                    echo isset($f['max']) ? 'maxlength="'.$f['max'].'" ' : '';
+                                    echo isset($f['pattern']) ? 'pattern="'.$f['pattern'].'" ' : '';
+                                    echo isset($f['title']) ? 'title="'.$f['title'].'" ' : '';
                                 }
+                                // -------------------------
                                 ?>
                             >
                         <?php endif; ?>
@@ -185,15 +177,8 @@ if ($rola === 'admin') {
                     <td data-order="<?php echo $idm['id']; ?>">#<?php echo $idm['id']; ?></td>
                     <td><strong><?php echo htmlspecialchars($idm['ime']." ".$idm['prezime']); ?></strong><br><small><?php echo htmlspecialchars($idm['trazi_osoba']); ?></small></td>
                     <td><?php echo htmlspecialchars($idm['odjel']); ?></td>
-
-<td data-order="<?php echo $idm['datum_dolaska']; ?>">
-    <?php echo date('d.m.Y', strtotime($idm['datum_dolaska'])); ?>
-</td>
-
-<td data-order="<?php echo $idm['updated_at']; ?>">
-    <strong><?php echo date('d.m.Y H:i', strtotime($idm['updated_at'])); ?></strong>
-</td>
-
+                    <td><?php echo date('d.m.Y', strtotime($idm['datum_dolaska'])); ?></td>
+                    <td><strong><?php echo date('d.m.Y H:i', strtotime($idm['updated_at'])); ?></strong></td>
                     <td><span class="status status-<?php echo $idm['status']; ?>"><?php echo str_replace('_', ' ', $idm['status']); ?></span></td>
                     <td><a href="edit_identity.php?id=<?php echo $idm['id']; ?>" style="font-weight:bold;">Obradi</a></td>
                 </tr>
@@ -202,44 +187,26 @@ if ($rola === 'admin') {
         </table>
     </div>
     <?php endif; ?>
-
-    <?php if ($rola === 'admin'): ?>
-    <div class="card">
-        <h3>Zadovoljstvo korisnika</h3>
-        <div class="stats-grid">
-            <div class="stat-box stat-exc">
-                <span class="stat-num"><?php echo $stats['excellent']; ?></span> Izvrsno 😃
-            </div>
-            <div class="stat-box stat-avg">
-                <span class="stat-num"><?php echo $stats['average']; ?></span> Dobro 😐
-            </div>
-            <div class="stat-box stat-poor">
-                <span class="stat-num"><?php echo $stats['poor']; ?></span> Loše 😞
-            </div>
-           
-        </div>
-
-    </div>
-    <?php endif; ?>
-
 </div>
-
-<div class="footer">DEVELOPED BY PIOPET</div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
         $('#identitiesTable').DataTable({
-            "pageLength": 10, "order": [[ 4, "desc" ]],
+            "pageLength": 10, 
+            "order": [[ 4, "desc" ]], // Sortiranje po 'Zadnja promjena' (provjeri je li to 4. ili 5. stupac, ovisi brojiš li od 0)
             "language": {
                 "search": "Pretraži:",
-                "lengthMenu": "Prikaži _MENU_ zapisa",
+                "lengthMenu": "Prikaži _MENU_ zapisa",  // <--- OVO SI TRAŽIO
                 "info": "Prikaz _START_ do _END_ od _TOTAL_ zahtjeva",
                 "infoEmpty": "Nema zapisa za prikaz",
                 "infoFiltered": "(filtrirano od ukupno _MAX_ zapisa)",
-                "zeroRecords": "Nema rezultata",
-                "paginate": { "next": "Sljedeća", "previous": "Prethodna" }
+                "zeroRecords": "Nema rezultata pretrage - žao nam je",
+                "paginate": { 
+                    "next": "Sljedeća", 
+                    "previous": "Prethodna" 
+                }
             }
         });
     });

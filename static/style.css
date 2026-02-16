@@ -84,7 +84,7 @@ header {
     background: #ffffff; 
     padding: 2.5rem; 
     border-radius: 4px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);e
     margin-bottom: 2rem; 
 }
 
@@ -137,6 +137,7 @@ button, .btn-save {
     font-size: 1rem;
     margin-top: 20px; /* FIX: Odvaja gumb od inputa */
 }
+
 button:hover, .btn-save:hover { background: #333; }
 
 /* =========================================
@@ -182,4 +183,74 @@ button:hover, .btn-save:hover { background: #333; }
     text-align: center; font-size: 10px; color: #bbb; letter-spacing: 2px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.8); pointer-events: none; z-index: 5;
     text-transform: uppercase;
+}
+
+/* =========================================
+   10. STATISTIKA ZADOVOLJSTVA (NOVO)
+   ========================================= */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Tri jednaka stupca */
+    gap: 20px; /* Razmak između kockica */
+    margin-top: 10px;
+}
+
+.stat-box {
+    padding: 20px;
+    border-radius: 4px;
+    text-align: center;
+    color: #fff; /* Bijeli tekst */
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Blaga sjena */
+}
+
+.stat-num {
+    display: block;
+    font-size: 2.5rem; /* Veliki broj */
+    margin-bottom: 5px;
+}
+
+/* Boje za smajliće */
+.stat-exc { background-color: #28a745; } /* Zelena za Izvrsno */
+.stat-avg { background-color: #ffc107; color: #212529; } /* Žuta za Dobro (tamni tekst radi čitljivosti) */
+.stat-poor { background-color: #dc3545; } /* Crvena za Loše */
+
+/* Ako se footer slučajno našao unutar grida, da ne smeta */
+.stats-grid {
+    grid-column: span 3;
+    position: static;
+    margin-top: 20px;
+}
+
+/* =========================================
+   FOOTER - PAMETNO POZICIONIRANJE
+   ========================================= */
+
+/* 1. Zajednički stil (izgled teksta) */
+.footer {
+    text-align: center;
+    font-size: 10px;
+    color: #bbb;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 5;
+    width: 100%;
+}
+
+/* 2. NA LOGINU -> Zalijepi ga za dno EKRANA */
+body.login-page .footer {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+}
+
+/* 3. NA DASHBOARDU -> Stavi ga normalno na dno STRANICE (da se skrola) */
+body.dashboard-page .footer {
+    position: relative;     /* Nije više fiksan! */
+    margin-top: 50px;       /* Odmakni ga od zadnje kartice */
+    padding-bottom: 20px;   /* Malo mjesta na dnu */
+    clear: both;            /* Osigurava da ide ispod svega */
 }

@@ -76,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Obrada zahtjeva | Hanžeković & Partneri</title>
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body class="dashboard-page">
@@ -90,11 +91,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <div class="grid">
-            <div class="section-title">Podaci iz zahtjeva</div>
+        <div class="section-title">Podaci iz zahtjeva</div>
             <?php foreach ($form_schema as $key => $cfg): ?>
                 <div class="info-card">
                     <label><?php echo $cfg['label']; ?></label>
-                    <strong><?php echo nl2br(htmlspecialchars($item[$key] ?? '-')); ?></strong>
+                    <strong>
+                        <?php 
+                        $raw_val = $item[$key] ?? '-';
+                        // Ako je polje tipa date, prikaži HR format
+                        if ($cfg['type'] === 'date' && $raw_val !== '-') {
+                            echo date('d.m.Y', strtotime($raw_val));
+                        } else {
+                            echo nl2br(htmlspecialchars($raw_val));
+                        }
+                        ?>
+                    </strong>
                 </div>
             <?php endforeach; ?>
 
@@ -127,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="full-width" style="margin-top:20px;">
-                    <button type="submit" class="btn-save">Spremi promjene i obavijesti naručitelja</button>
+                    <button type="submit" class="btn-save">Spremi promjene [i obavijesti naručitelja (ako je završeno)]</button>
                 </div>
             </form>
         </div>
