@@ -1,0 +1,148 @@
+/* =========================================
+   GLOBALNE POSTAVKE (Vrijede za SVE stranice)
+   ========================================= */
+/* 1. Ovo osigurava da body stvarno zauzima cijeli ekran */
+/* static/style.css */
+
+/* 1. Ovo osigurava da body stvarno zauzima cijeli ekran */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    min-height: 100%;
+    background-color: #1a1a1a;
+    background-image: url('../images/background.jpg'); 
+    background-size: cover;      
+    background-position: center; 
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* 2. Posebna klasa za login koja forsira centriranje */
+body.login-page {
+    display: flex; 
+    flex-direction: column; /* Da footer ide ispod ako zatreba */
+    align-items: center;    /* Vodoravno centriranje */
+    justify-content: center; /* Okomito centriranje */
+    overflow: hidden;       /* Da nema nepotrebnog skrolanja na login-u */
+}
+
+/* Osiguraj da login-container nema neke lude margine koje ga guraju */
+.login-container { 
+    background: rgba(255, 255, 255, 0.96);
+    padding: 2.5rem; 
+    border-radius: 4px; 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
+    width: 100%; 
+    max-width: 400px; 
+    margin: 0 auto; /* Dodatna sigurnost za centriranje */
+}
+
+.logo-wrapper { text-align: center; margin-bottom: 2rem; }
+.logo-wrapper img { width: 100%; max-width: 280px; height: auto; }
+
+.login-container h2 { 
+    text-align: center; color: #333; font-weight: 400; margin-bottom: 2rem; 
+    font-size: 1rem; text-transform: uppercase; letter-spacing: 1.5px;
+    border-bottom: 1px solid #eee; padding-bottom: 1rem;
+}
+
+.login-container .footer {
+    position: absolute; bottom: 20px; width: 100%;
+    text-align: center; font-size: 10px; color: #ccc; letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* =========================================
+   DASHBOARD & EDIT STRANICE
+   ========================================= */
+/* Ovdje NE stavljamo background jer ga nasljeđuje od 'body' */
+
+/* Header - Lagano proziran da se vidi slika ispod */
+header { 
+    background: rgba(26, 26, 26, 0.95); 
+    color: #fff; 
+    padding: 1rem 2rem; 
+    display: flex; justify-content: space-between; align-items: center; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    position: sticky; top: 0; z-index: 100; /* Header ostaje na vrhu */
+}
+
+.logout-link {
+    color: #ff6b6b; text-decoration: none; 
+    border: 1px solid #ff6b6b; padding: 5px 10px; border-radius: 4px;
+    transition: all 0.3s;
+}
+.logout-link:hover { background: #ff6b6b; color: white; }
+
+/* Layout */
+.container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+/* Kartice moraju biti bijele da bi tekst bio čitljiv na slici */
+.card { 
+    background: #ffffff; /* Čista bijela */
+    padding: 1.5rem; 
+    border-radius: 4px; 
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2); /* Jača sjena da se odvoji od pozadine */
+    margin-bottom: 2rem; 
+}
+
+/* Forme i Elementi */
+.form-group { margin-bottom: 1.2rem; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.full-width { grid-column: span 2; }
+
+label { display: block; margin-bottom: 5px; color: #444; font-size: 0.85rem; font-weight: bold; }
+
+input, select, textarea { 
+    width: 100%; padding: 10px; background: #fff;
+    border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; 
+    color: #333; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: #555; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+
+button { 
+    width: 100%; padding: 12px 20px; background: #1a1a1a; color: #fff; 
+    border: none; border-radius: 4px; cursor: pointer; font-weight: bold; 
+    transition: background 0.2s;
+}
+button:hover { background: #333; }
+
+/* DataTables Override */
+.dataTables_wrapper { font-size: 0.9rem !important; font-family: 'Segoe UI', sans-serif; }
+.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, 
+.dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, 
+.dataTables_wrapper .dataTables_paginate {
+    color: #fff !important; /* Tekst izvan tablice (search, info) mora biti bijeli jer je na tamnoj slici! */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button { color: #fff !important; }
+
+/* Status Labels */
+.status { padding: 4px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: bold; text-transform: uppercase; }
+.status-novi { background: #f8d7da; color: #721c24; }
+.status-u_obradi { background: #fff3cd; color: #856404; }
+.status-zavrseno { background: #d4edda; color: #155724; }
+
+.footer {
+    position: absolute;
+    bottom: 20px;
+    left: 0;            /* Osigurava centriranje od ruba do ruba */
+    width: 100%;
+    text-align: center;
+    font-size: 10px;
+    color: #bbb;        /* Svijetlo siva boja */
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    
+    /* Dodajemo sjenu da tekst "ne nestane" ako je slika na tom mjestu svijetla */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    
+    /* Pointer-events: none osigurava da footer ne blokira klikove ako se slučajno preklapa s nečim */
+    pointer-events: none; 
+    z-index: 5;
+}

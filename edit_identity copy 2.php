@@ -1,30 +1,53 @@
 <?php
 /**
- * v4.4.0 - RESTORED EDITOR
+ * v4.3.2 - LOCALIZED EDITOR (UI FIX)
+ * Projekt: Hanžeković & Partneri IDM
+ * Opis: Obrada zahtjeva s ispravljenim UI kontejnerima.
  */
 require_once __DIR__ . '/db_config.php';
 require_once __DIR__ . '/mailer.php';
-session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['rola'] !== 'admin') { header("Location: index.php"); exit; }
-$id = $_GET['id'] ?? null;
-if (!$id) { header("Location: dashboard.php"); exit; }
 
+session_start();
+
+// Provjera ovlasti
+if (!isset($_SESSION['user_id']) || $_SESSION['rola'] !== 'admin') { 
+    header("Location: index.php"); 
+    exit; 
+}
+
+$id = $_GET['id'] ?? null;
+if (!$id) { 
+    header("Location: dashboard.php"); 
+    exit; 
+}
+
+// Dohvat podataka o identitetu
 $stmt = $pdo->prepare("SELECT * FROM hanz_identities WHERE id = ?");
 $stmt->execute([$id]);
 $item = $stmt->fetch();
-if (!$item) { die("Zahtjev nije pronađen."); }
 
+if (!$item) { 
+    die("Zahtjev nije pronađen."); 
+}
+
+/**
+ * Obrada POST zahtjeva za ažuriranje podataka
+ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $updates = []; $vals = [':id' => $id, ':status' => $_POST['status']];
+        $updates = []; 
+        $vals = [':id' => $id, ':status' => $_POST['status']];
+        
+        // Dinamičko slaganje UPDATE upita prema IT shemi
         foreach ($it_schema as $key => $cfg) {
             $updates[] = "$key = :$key";
             $vals[":$key"] = ($cfg['type'] === 'checkbox') ? (isset($_POST[$key]) ? 1 : 0) : ($_POST[$key] ?? null);
         }
+        
         $sql = "UPDATE hanz_identities SET " . implode(', ', $updates) . ", status = :status WHERE id = :id";
         $pdo->prepare($sql)->execute($vals);
 
-        // SLANJE ZAVRŠNOG MAILA
+        // Slanje obavijesti naručitelju ako je status 'zavrseno'
         if ($_POST['status'] === 'zavrseno' && $item['status'] !== 'zavrseno') {
             $podnositelj = $item['trazi_osoba'];
             $primatelj_mail = $hanz_requestors[$podnositelj] ?? 'gkonjic@piopet.hr';
@@ -34,13 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $val = !empty($item[$key]) ? htmlspecialchars($item[$key]) : '-';
                 $htmlClientData .= "<tr><td style='padding:8px; color:#666; border-bottom:1px solid #eee; width:40%;'>{$cfg['label']}</td><td style='padding:8px; font-weight:bold; border-bottom:1px solid #eee;'>$val</td></tr>";
             }
+
             $htmlItData = "";
             foreach ($it_schema as $key => $cfg) {
                 if ($key === 'it_napomena') continue;
                 $val = ($cfg['type'] === 'checkbox') ? (isset($_POST[$key]) ? 'DA' : 'NE') : ($_POST[$key] ?? '-');
                 $htmlItData .= "<tr><td style='padding:8px; color:#666; border-bottom:1px solid #eee; width:40%;'>{$cfg['label']}</td><td style='padding:8px; font-weight:bold; border-bottom:1px solid #eee;'>$val</td></tr>";
             }
-            
+
             $baseUrl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
             $tijelo = "<html><body style='font-family:Segoe UI,Arial; background:#f4f4f4; padding:20px;'>
                         <div style='max-width:600px; margin:0 auto; background:#fff; border:1px solid #e0e0e0;'>
@@ -64,11 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                         </div></body></html>";
-            
+
             posalji_obavijest($primatelj_mail, "ZAVRŠENO: " . $item['ime'] . " " . $item['prezime'], $tijelo);
         }
-        header("Location: edit_identity.php?id=$id&msg=ok"); exit;
-    } catch (PDOException $e) { die("Greška: " . $e->getMessage()); }
+        header("Location: edit_identity.php?id=$id&msg=ok"); 
+        exit;
+    } catch (PDOException $e) { 
+        die("Greška: " . $e->getMessage()); 
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -86,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2>Obrada zahtjeva: <?php echo htmlspecialchars($item['ime'] . " " . $item['prezime']); ?></h2>
 
         <?php if (isset($_GET['msg'])): ?>
-            <div class="alert-success" style="background:#d4edda; color:#155724; padding:15px; margin-bottom:20px; border-radius:4px; font-weight:bold;">Promjene su uspješno spremljene!</div>
+            <div class="alert-success">Promjene su uspješno spremljene!</div>
         <?php endif; ?>
 
         <div class="grid">

@@ -1,6 +1,6 @@
 <?php
 /**
- * v4.4.0 - RESTORED EDITOR
+ * v4.3.1 - LOCALIZED EDITOR
  */
 require_once __DIR__ . '/db_config.php';
 require_once __DIR__ . '/mailer.php';
@@ -24,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "UPDATE hanz_identities SET " . implode(', ', $updates) . ", status = :status WHERE id = :id";
         $pdo->prepare($sql)->execute($vals);
 
-        // SLANJE ZAVRŠNOG MAILA
         if ($_POST['status'] === 'zavrseno' && $item['status'] !== 'zavrseno') {
             $podnositelj = $item['trazi_osoba'];
             $primatelj_mail = $hanz_requestors[$podnositelj] ?? 'gkonjic@piopet.hr';
@@ -34,13 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $val = !empty($item[$key]) ? htmlspecialchars($item[$key]) : '-';
                 $htmlClientData .= "<tr><td style='padding:8px; color:#666; border-bottom:1px solid #eee; width:40%;'>{$cfg['label']}</td><td style='padding:8px; font-weight:bold; border-bottom:1px solid #eee;'>$val</td></tr>";
             }
+
             $htmlItData = "";
             foreach ($it_schema as $key => $cfg) {
                 if ($key === 'it_napomena') continue;
                 $val = ($cfg['type'] === 'checkbox') ? (isset($_POST[$key]) ? 'DA' : 'NE') : ($_POST[$key] ?? '-');
                 $htmlItData .= "<tr><td style='padding:8px; color:#666; border-bottom:1px solid #eee; width:40%;'>{$cfg['label']}</td><td style='padding:8px; font-weight:bold; border-bottom:1px solid #eee;'>$val</td></tr>";
             }
-            
+
             $baseUrl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
             $tijelo = "<html><body style='font-family:Segoe UI,Arial; background:#f4f4f4; padding:20px;'>
                         <div style='max-width:600px; margin:0 auto; background:#fff; border:1px solid #e0e0e0;'>
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                         </div></body></html>";
-            
+
             posalji_obavijest($primatelj_mail, "ZAVRŠENO: " . $item['ime'] . " " . $item['prezime'], $tijelo);
         }
         header("Location: edit_identity.php?id=$id&msg=ok"); exit;
@@ -75,62 +75,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <title>Obrada zahtjeva | Hanžeković & Partneri</title>
-    <link rel="stylesheet" href="static/style.css">
+    <title>Hanžeković & Partneri | IDM</title>
+    
+    <!--<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">-->
+    
+    <link rel="stylesheet" href="./static/style.css">
 </head>
 <body class="dashboard-page">
 <div class="container">
-    <a href="dashboard.php" class="back-link">&larr; Povratak na Dashboard</a>
-    
-    <div class="card">
-        <h2>Obrada zahtjeva: <?php echo htmlspecialchars($item['ime'] . " " . $item['prezime']); ?></h2>
+    <a href="dashboard.php" style="text-decoration:none; color:#666;">&larr; Povratak na Dashboard</a>
+    <h2>Obrada zahtjeva: <?php echo htmlspecialchars($item['ime'] . " " . $item['prezime']); ?></h2>
 
-        <?php if (isset($_GET['msg'])): ?>
-            <div class="alert-success" style="background:#d4edda; color:#155724; padding:15px; margin-bottom:20px; border-radius:4px; font-weight:bold;">Promjene su uspješno spremljene!</div>
-        <?php endif; ?>
+    <?php if (isset($_GET['msg'])): ?><div style="background:#d4edda; color:#155724; padding:10px; margin-bottom:20px; border-radius:4px;">Promjene su uspješno spremljene!</div><?php endif; ?>
 
-        <div class="grid">
-            <div class="section-title">Podaci iz zahtjeva</div>
-            <?php foreach ($form_schema as $key => $cfg): ?>
-                <div class="info-card">
+    <div class="grid">
+        <div class="section-title">Podaci iz zahtjeva</div>
+        <?php foreach ($form_schema as $key => $cfg): ?>
+            <div class="info-card"><label><?php echo $cfg['label']; ?></label><strong><?php echo nl2br(htmlspecialchars($item[$key] ?? '-')); ?></strong></div>
+        <?php endforeach; ?>
+
+        <form action="" method="POST" class="grid" style="grid-column: span 2; margin: 0;">
+            <div class="section-title">IT Realizacija</div>
+            <?php foreach ($it_schema as $key => $cfg): ?>
+                <div class="<?php echo ($cfg['type'] === 'textarea') ? 'full-width' : ''; ?>">
                     <label><?php echo $cfg['label']; ?></label>
-                    <strong><?php echo nl2br(htmlspecialchars($item[$key] ?? '-')); ?></strong>
+                    <?php if ($cfg['type'] === 'textarea'): ?>
+                        <textarea name="<?php echo $key; ?>" rows="3" placeholder="<?php echo $cfg['placeholder']; ?>"><?php echo htmlspecialchars($item[$key]); ?></textarea>
+                    <?php elseif ($cfg['type'] === 'checkbox'): ?>
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="<?php echo $key; ?>" <?php echo $item[$key] ? 'checked' : ''; ?> style="width:auto;"> <?php echo $cfg['text']; ?></label>
+                    <?php else: ?>
+                        <input type="<?php echo $cfg['type']; ?>" name="<?php echo $key; ?>" value="<?php echo htmlspecialchars($item[$key]); ?>" placeholder="<?php echo $cfg['placeholder']; ?>">
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
-
-            <form action="" method="POST" class="grid full-width" style="margin: 0;">
-                <div class="section-title">IT Realizacija</div>
-                <?php foreach ($it_schema as $key => $cfg): ?>
-                    <div class="<?php echo ($cfg['type'] === 'textarea') ? 'full-width' : ''; ?>">
-                        <label><?php echo $cfg['label']; ?></label>
-                        <?php if ($cfg['type'] === 'textarea'): ?>
-                            <textarea name="<?php echo $key; ?>" rows="3" placeholder="<?php echo $cfg['placeholder'] ?? ''; ?>"><?php echo htmlspecialchars($item[$key]); ?></textarea>
-                        <?php elseif ($cfg['type'] === 'checkbox'): ?>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="<?php echo $key; ?>" <?php echo $item[$key] ? 'checked' : ''; ?>> 
-                                <?php echo $cfg['text'] ?? 'Omogućeno'; ?>
-                            </label>
-                        <?php else: ?>
-                            <input type="<?php echo $cfg['type']; ?>" name="<?php echo $key; ?>" value="<?php echo htmlspecialchars($item[$key]); ?>" placeholder="<?php echo $cfg['placeholder'] ?? ''; ?>">
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                
-                <div class="full-width">
-                    <label>Status zahtjeva</label>
-                    <select name="status" class="status-select">
-                        <option value="novi" <?php echo ($item['status'] == 'novi') ? 'selected' : ''; ?>>Novi zahtjev</option>
-                        <option value="u_obradi" <?php echo ($item['status'] == 'u_obradi') ? 'selected' : ''; ?>>U obradi</option>
-                        <option value="zavrseno" <?php echo ($item['status'] == 'zavrseno') ? 'selected' : ''; ?>>Završeno (Šalje obavijest)</option>
-                        <option value="stornirano" <?php echo ($item['status'] == 'stornirano') ? 'selected' : ''; ?>>Stornirano</option>
-                    </select>
-                </div>
-                
-                <div class="full-width" style="margin-top:20px;">
-                    <button type="submit" class="btn-save">Spremi promjene i obavijesti naručitelja</button>
-                </div>
-            </form>
-        </div>
+            <div class="full-width">
+                <label>Status zahtjeva</label>
+                <select name="status" style="background: #fffbeb; font-weight: bold;">
+                    <option value="novi" <?php echo ($item['status'] == 'novi') ? 'selected' : ''; ?>>Novi zahtjev</option>
+                    <option value="u_obradi" <?php echo ($item['status'] == 'u_obradi') ? 'selected' : ''; ?>>U obradi</option>
+                    <option value="zavrseno" <?php echo ($item['status'] == 'zavrseno') ? 'selected' : ''; ?>>Završeno (Šalje obavijest)</option>
+                    <option value="stornirano" <?php echo ($item['status'] == 'stornirano') ? 'selected' : ''; ?>>Stornirano</option>
+                </select>
+            </div>
+            <div class="full-width" style="margin-top:20px;"><button type="submit" class="btn-save">Spremi promjene i obavijesti naručitelja ako je završeno</button></div>
+        </form>
     </div>
 </div>
 </body>

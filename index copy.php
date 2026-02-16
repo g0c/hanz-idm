@@ -1,7 +1,6 @@
 <?php
 /**
- * v1.0.8 - CLEAN LOGIN
- * Projekt: Hanžeković & Partneri IDM
+ * v1.0.6 - EXTERNAL CSS VERSION
  */
 require_once 'db_config.php';
 session_start();
@@ -16,8 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$username]);
     $user = $stmt->fetch();
 
-    if (!$user || !password_verify($password, $user['password'])) {
-        $error = "Neispravno korisničko ime ili lozinka.";
+    if (!$user) {
+        $error = "DEBUG: Korisnik '$username' NE POSTOJI u bazi.";
+    } elseif (!password_verify($password, $user['password'])) {
+        $error = "DEBUG: Korisnik pronađen, ali password_verify kaže NE.";
     } else {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['rola'] = $user['rola'];
@@ -27,8 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
-<html lang="hr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
