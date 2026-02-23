@@ -254,3 +254,38 @@ body.dashboard-page .footer {
     padding-bottom: 20px;   /* Malo mjesta na dnu */
     clear: both;            /* Osigurava da ide ispod svega */
 }
+
+/* TABLE LAYOUT FIXES */
+.nowrap { 
+    white-space: nowrap !important; 
+}
+
+#identitiesTable {
+    width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+#identitiesTable td, #identitiesTable th {
+    vertical-align: middle;
+    padding: 12px 8px; /* Malo više mjesta za disanje */
+}
+
+/* Osiguraj da ime i prezime imaju prednost ali ne "ubiju" ostale */
+.col-identity {
+    min-width: 150px;
+}
+
+/* Smanji font u tablici ako je baš gužva */
+#identitiesTable {
+    font-size: 0.85rem;
+}
+
+.input-error { border: 2px solid #dc3545 !important; background-color: #fff8f8 !important; }
+.alert-error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; }
+.alert-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-bottom: 20px; }
+.stat-box { padding: 15px; border-radius: 4px; color: #fff; font-weight: bold; text-transform: uppercase; }
+.stat-exc { background: #28a745; }
+.stat-avg { background: #ffc107; color: #000; }
+.stat-poor { background: #dc3545; }
+.stat-num { font-size: 2rem; display: block; margin-bottom: 5px; }
